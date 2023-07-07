@@ -7,6 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+    });
+});
+
 builder.Services.AddDbContext<ReactivitiesContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -18,9 +26,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
@@ -33,15 +43,15 @@ var services = scope.ServiceProvider;
 
 try
 {
-  var context = services.GetRequiredService<ReactivitiesContext>();
+    var context = services.GetRequiredService<ReactivitiesContext>();
 
-  await context.Database.MigrateAsync();
-  await Seed.SeedData(context);
+    await context.Database.MigrateAsync();
+    await Seed.SeedData(context);
 }
 catch (Exception ex)
 {
-  var logger = services.GetRequiredService<ILogger<Program>>();
-  logger.LogError(ex, "An error occured during migration");
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occured during migration");
 }
 
 app.Run();
